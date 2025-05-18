@@ -19,8 +19,12 @@ logger = logging.getLogger(__name__)
 class NotificationSendingStrategy(Protocol):
     """Abstract base class for notification sending strategies."""
 
+    # TODO: strategies should have settings for each user profile
+    # TODO: so we could have a webhook strategy that sends to a different
+    # TODO: webhook for each user profile, same for email and sms
+
     @abstractmethod
-    def send(self, notification: Notification, payload: dict[str, Any]) -> bool:
+    def send(self, notification: Notification, payload: dict[str, Any]) -> None:
         """
         Sends the notification, mutates notification.status/response_data.
         Should return None on success.
@@ -37,6 +41,7 @@ class WebhookChannelStrategy:
         webhook_url = getattr(
             settings,
             "NOTIFICATION_WEBHOOK_URL",
+            # TODO: this should be as a setting in the DB for each user profile
             "http://host.docker.internal:9000/webhook/notifications/",
         )
         logger.info(
@@ -75,21 +80,21 @@ class WebhookChannelStrategy:
 class EmailChannelStrategy(NotificationSendingStrategy):
     """Strategy for sending notifications via email (Not Implemented)."""
 
-    def send(self, notification: Notification, payload: dict[str, Any]) -> bool:
+    def send(self, notification: Notification, payload: dict[str, Any]) -> None:
         logger.info(
             f"EmailStrategy: Sending notification {notification.notification_uuid} to user {notification.user.email} (Not Implemented)"
         )
-        return notification.mark_pending()
+        notification.mark_pending()
 
 
 class SMSChannelStrategy(NotificationSendingStrategy):
     """Strategy for sending notifications via SMS (Not Implemented)."""
 
-    def send(self, notification: Notification, payload: dict[str, Any]) -> bool:
+    def send(self, notification: Notification, payload: dict[str, Any]) -> None:
         logger.info(
             f"SMSStrategy: Sending notification {notification.notification_uuid} to user (Not Implemented)"
         )
-        return notification.mark_pending()
+        notification.mark_pending()
 
 
 CHANNEL_REGISTRY: dict[str, NotificationSendingStrategy] = {
