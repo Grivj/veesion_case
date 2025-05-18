@@ -7,7 +7,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import UserProfile
 from .serializers import (
     AlertCreateSerializer,
     AlertReadOnlySerializer,
@@ -42,9 +41,6 @@ class AlertWebhookAPIView(APIView):
             )
 
         try:
-            logger.warning(
-                f"Enqueuing notification fan-out for alert {alert.alert_uuid}",
-            )
             fan_out_notifications.delay(str(alert.alert_uuid))
         except Exception as task_exc:
             # uh-oh... celery isn't feeling well

@@ -22,9 +22,6 @@ def fan_out_notifications(alert_uuid: str):
         logger.error(f"Alert {alert_uuid} not found.")
         return
 
-    logger.warning(
-        f"Fanning out notifications for alert {alert_uuid}",
-    )
     task_signatures: list[Signature] = []
     for profile in alert.store.user_profiles.all():
         if not profile.should_notify(alert):
