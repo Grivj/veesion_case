@@ -1,0 +1,53 @@
+services:
+  notification-dispatcher:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8000 config.wsgi:application --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://dev:dev@db:5432/notifications
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=my_very_secret_key
+
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=notifications
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery-worker:
+    build: .
+    command: celery -A config.celery worker -l INFO -Q celery,notifications
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://dev:dev@db:5432/notifications
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=my_very_secret_key
+    depends_on:
+      - db
+      - redis
+      - notification-dispatcher
+
+volumes:
+  postgres_data:
+  redis_data:
