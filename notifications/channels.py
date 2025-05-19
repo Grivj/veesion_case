@@ -16,6 +16,9 @@ from .models import ChannelChoices, Notification
 logger = logging.getLogger(__name__)
 
 
+# TODO: pattern is custom but do we have django ways of doing this?
+
+
 class NotificationSendingStrategy(Protocol):
     """Abstract base class for notification sending strategies."""
 
