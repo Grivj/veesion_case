@@ -2,10 +2,12 @@ import logging
 from typing import Any
 
 from django.db import DatabaseError, transaction
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from notifications.models import UserProfile
 
 from .serializers import (
     AlertCreateSerializer,
@@ -30,6 +32,8 @@ class AlertWebhookAPIView(APIView):
         try:
             with transaction.atomic():
                 alert = serializer.save()
+
+        # TODO: try-catch block here could probably be done across the app as a middleware?
         except DatabaseError as db_exc:
             logger.exception(
                 "DB error saving Alert",
@@ -60,22 +64,10 @@ class AlertWebhookAPIView(APIView):
         return Response(read_serializer.data, status=status.HTTP_200_OK)
 
 
-class UserProfileCreateAPIView(APIView):
+class UserProfileCreateAPIView(generics.CreateAPIView):
     """
     API endpoint to create a UserProfile for testing.
     """
 
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        serializer = UserProfileCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        profile = serializer.save()
-        return Response(
-            {
-                "id": str(profile.id),
-                "user_id": profile.user_id,
-                "store": profile.store.location_id,
-                "notification_preference": profile.notification_preference,
-                "preferred_channel": profile.preferred_channel,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileCreateSerializer

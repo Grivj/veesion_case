@@ -57,8 +57,7 @@ def send_notification(self: Task, notification_uuid: str):
 
     # Build payload and choose strategy
     payload = notification.build_payload()
-    strategy = get_channel_strategy(notification.channel)
-    if not strategy:
+    if not (strategy := get_channel_strategy(notification.channel)):
         notification.mark_failed("No channel strategy")
         return
 
